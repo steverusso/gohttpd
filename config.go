@@ -12,6 +12,7 @@ type config struct {
 	root      string
 	domainCSV string
 	port      int
+	mem       bool
 }
 
 func (c *config) isProduction() bool {

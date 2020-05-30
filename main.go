@@ -6,7 +6,6 @@ package main
 import (
 	"flag"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +16,7 @@ var (
 	rootdir = flag.String("root", "", "The root directory of static resources to serve.")
 	domains = flag.String("domains", "", "CSV of domains which indicates production.")
 	port    = flag.Int("port", 8080, "The port to use for the local server.")
+	mem     = flag.Bool("mem", false, "Cache files in memory instead of using disk.")
 )
 
 func main() {
@@ -27,13 +27,14 @@ func main() {
 		root:      *rootdir,
 		domainCSV: *domains,
 		port:      *port,
+		mem:       *mem,
 	}
 
 	// Start a new Server and process any errors that are sent back by the Server
 	// over the error channel.
 	go func() {
 		srv := newServer(cfg)
-		for err := range srv.Start(http.FileServer(http.Dir(cfg.root))) {
+		for err := range srv.Start(newFileHandler(cfg)) {
 			if err != nil {
 				log.Fatal(err)
 			}
