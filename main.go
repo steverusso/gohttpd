@@ -11,30 +11,20 @@ import (
 	"syscall"
 )
 
-// Cli args.
-var (
-	rootdir = flag.String("root", "", "The root directory of static resources to serve.")
-	domains = flag.String("domains", "", "CSV of domains which indicates production.")
-	port    = flag.Int("port", 8080, "The port to use for the local server.")
-	mem     = flag.Bool("mem", false, "Cache files in memory instead of using disk.")
-)
-
 func main() {
-	flag.Parse()
-
 	// Initialize config from cli args.
-	cfg := &config{
-		root:      *rootdir,
-		domainCSV: *domains,
-		port:      *port,
-		mem:       *mem,
-	}
+	var cfg config
+	flag.StringVar(&cfg.root, "root", "", "The root directory of static resources to serve.")
+	flag.StringVar(&cfg.domainCSV, "domains", "", "CSV of domains which indicates production.")
+	flag.IntVar(&cfg.port, "port", 8080, "The port to use for the local server.")
+	flag.BoolVar(&cfg.mem, "mem", false, "Cache files in memory instead of using disk.")
+	flag.Parse()
 
 	// Start a new Server and process any errors that are sent back by the Server
 	// over the error channel.
 	go func() {
-		srv := newServer(cfg)
-		for err := range srv.Start(newFileHandler(cfg)) {
+		srv := newServer(&cfg)
+		for err := range srv.Start(newFileHandler(&cfg)) {
 			if err != nil {
 				log.Fatal(err)
 			}
