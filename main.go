@@ -14,17 +14,21 @@ import (
 func main() {
 	// Initialize config from cli args.
 	var cfg config
-	flag.StringVar(&cfg.root, "root", "", "The root directory of static resources to serve.")
 	flag.StringVar(&cfg.domainCSV, "domains", "", "CSV of domains which indicates production.")
 	flag.IntVar(&cfg.port, "port", 8080, "The port to use for the local server.")
 	flag.BoolVar(&cfg.mem, "mem", false, "Cache files in memory instead of using disk.")
 	flag.Parse()
 
+	root := "."
+	if len(flag.Args()) > 0 {
+		root = flag.Args()[0]
+	}
+
 	// Start a new Server and process any errors that are sent back by the Server
 	// over the error channel.
 	go func() {
 		srv := newServer(&cfg)
-		for err := range srv.Start(newFileHandler(&cfg)) {
+		for err := range srv.Start(newFileHandler(root, &cfg)) {
 			if err != nil {
 				log.Fatal(err)
 			}

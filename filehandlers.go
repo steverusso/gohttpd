@@ -16,11 +16,11 @@ import (
 
 // newFileHandler returns a cached file server or an http.FileServer based on
 // the given configuration values.
-func newFileHandler(cfg *config) http.Handler {
+func newFileHandler(root string, cfg *config) http.Handler {
 	if cfg.mem {
-		return newFileMemCache(cfg.root)
+		return newFileMemCache(root)
 	}
-	return http.FileServer(http.Dir(cfg.root))
+	return http.FileServer(http.Dir(root))
 }
 
 // httpHandlerTable maps strings, representing HTTP routes, to `http.Handler`s.

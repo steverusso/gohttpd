@@ -18,6 +18,6 @@ pidfile="/var/run/${name}.pid"
 procname="/usr/local/bin/${name}"
 
 command="/usr/sbin/daemon"
-command_args="-p ${pidfile} -o ${gohttpd_logfile} ${procname} -root=${gohttpd_rootdir} -domains=${gohttpd_domains}"
+command_args="-p ${pidfile} -o ${gohttpd_logfile} ${procname} ${gohttpd_rootdir} -domains=${gohttpd_domains}"
 
 run_rc_command "$1"

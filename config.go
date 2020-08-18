@@ -9,7 +9,6 @@ import (
 )
 
 type config struct {
-	root      string
 	domainCSV string
 	port      int
 	mem       bool
