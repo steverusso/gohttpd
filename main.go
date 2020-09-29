@@ -5,33 +5,41 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
-	// Initialize config from cli args.
-	var cfg config
-	flag.StringVar(&cfg.domainCSV, "domains", "", "CSV of domains which indicates production.")
-	flag.IntVar(&cfg.port, "port", 8080, "The port to use for the local server.")
-	flag.BoolVar(&cfg.mem, "mem", false, "Cache files in memory instead of using disk.")
+	tls := flag.Bool("tls", false, "Use TLS.")
+	mem := flag.Bool("mem", false, "Cache files in memory instead of using disk.")
+	port := flag.Int("port", 8080, "The port to use for the local server.")
+	flag.Usage = usage
 	flag.Parse()
 
-	root := "."
+	dir := "/var/www"
 	if len(flag.Args()) > 0 {
-		root = flag.Args()[0]
+		dir = flag.Args()[0]
 	}
 
-	// Start a new Server and process any errors that are sent back by the Server
-	// over the error channel.
+	h, err := getSiteHandler(dir, *mem)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	go func() {
-		srv := newServer(&cfg)
-		for err := range srv.Start(newFileHandler(root, &cfg)) {
-			if err != nil {
+		if !*tls {
+			if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), h); err != nil {
 				log.Fatal(err)
 			}
+			return
+		}
+
+		if err := ServeTLS(h); err != nil {
+			log.Fatal(err)
 		}
 	}()
 
@@ -53,3 +61,19 @@ func listenForSignals(sigFn func(os.Signal)) {
 		sigFn(sig)
 	}
 }
+
+func usage() {
+	fmt.Fprint(os.Stderr, usageMsg)
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
+var usageMsg = `GoHTTPd is a specific, stubbornly simple web server.
+
+Usage:
+
+  gohttpd <directory> [options]
+
+Options:
+
+`

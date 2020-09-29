@@ -5,7 +5,6 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -14,17 +13,8 @@ import (
 	"strings"
 )
 
-// newFileHandler returns a cached file server or an http.FileServer based on
-// the given configuration values.
-func newFileHandler(root string, cfg *config) http.Handler {
-	if cfg.mem {
-		return newFileMemCache(root)
-	}
-	return http.FileServer(http.Dir(root))
-}
-
-// httpHandlerTable maps strings, representing HTTP routes, to `http.Handler`s.
-type httpHandlerTable map[string]http.Handler
+// HandlerTable maps strings, representing HTTP routes, to `http.Handler`s.
+type HandlerTable map[string]http.Handler
 
 // ServeHTTP uses the request URL path as the key for which `http.Handler` to
 // use from the table. A NotFound handler is used if there is no matching
@@ -32,7 +22,7 @@ type httpHandlerTable map[string]http.Handler
 //
 // Requests ending with "/index.html" are redirected to the same URI without
 // the "index.html" part.
-func (ht httpHandlerTable) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ht HandlerTable) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if redirectIndex(w, r) {
 		return
 	}
@@ -48,7 +38,7 @@ func (ht httpHandlerTable) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // notFound serves the table's 404 handler if present. Otherwise, it writes a
 // `NotFound` message and status code to the response.
-func (ht httpHandlerTable) notFound(w http.ResponseWriter, r *http.Request) {
+func (ht HandlerTable) notFound(w http.ResponseWriter, r *http.Request) {
 	if h404, ok := ht["/404.html"]; ok {
 		h404.ServeHTTP(w, r)
 		return
@@ -93,19 +83,13 @@ func (f *cachedFile) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(f.content)
 }
 
-// newFileMemCache returns an httpHandlerTable of file paths to cachedFiles.
-// The files are read recursively from the given directory and entered as
-// cachedFiles in the httpHandlerTable using their file paths as keys.
-//
-// If an empty string is provided, then "." is used as the directory.
-func newFileMemCache(dir string) httpHandlerTable {
-	if dir == "" {
-		dir = "."
-	}
+// newFileMemCache returns an HandlerTable of file paths to cachedFiles. The
+// files are read recursively from the given directory and entered as
+// cachedFiles in the HandlerTable using their file paths as keys.
+func newFileMemCache(dir string) (HandlerTable, error) {
+	cache := HandlerTable{}
 
-	cache := make(httpHandlerTable)
-
-	err := filepath.Walk(dir, func(fpath string, info os.FileInfo, err error) error {
+	return cache, filepath.Walk(dir, func(fpath string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
@@ -128,10 +112,4 @@ func newFileMemCache(dir string) httpHandlerTable {
 
 		return nil
 	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return cache
 }
