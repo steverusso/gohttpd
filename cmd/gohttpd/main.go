@@ -4,8 +4,6 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,25 +14,19 @@ import (
 )
 
 func main() {
-	tls := flag.Bool("tls", false, "Use TLS.")
-	mem := flag.Bool("mem", false, "Cache files in memory instead of using disk.")
-	port := flag.Int("port", 8080, "The port to use for the local server.")
-	flag.Usage = usage
-	flag.Parse()
-
-	dir := "/var/www"
-	if len(flag.Args()) > 0 {
-		dir = flag.Args()[0]
+	dir, cfg, err := gohttpd.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	h, err := gohttpd.GetSiteHandler(dir, *mem)
+	h, err := gohttpd.GetSiteHandler(dir, cfg.Mem)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
-		if !*tls {
-			if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), h); err != nil {
+		if !cfg.TLS {
+			if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
 				log.Fatal(err)
 			}
 			return
@@ -63,19 +55,3 @@ func listenForSignals(sigFn func(os.Signal)) {
 		sigFn(sig)
 	}
 }
-
-func usage() {
-	fmt.Fprint(os.Stderr, usageMsg)
-	flag.PrintDefaults()
-	os.Exit(2)
-}
-
-var usageMsg = `GoHTTPd is a specific, stubbornly simple web server.
-
-Usage:
-
-  gohttpd <directory> [options]
-
-Options:
-
-`
