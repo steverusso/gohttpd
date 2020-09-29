@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	h, err := gohttpd.GetSiteHandler(dir, cfg.Mem)
+	h, err := gohttpd.GetHandler(dir, cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

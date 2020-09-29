@@ -16,7 +16,7 @@ type Config struct {
 	Port int
 }
 
-func LoadConfig() (string, Config, error) {
+func LoadConfig() (string, *Config, error) {
 	tls := flag.Bool("tls", false, "Use TLS.")
 	mem := flag.Bool("mem", false, "Cache files in memory instead of using disk.")
 	port := flag.Int("port", 8080, "The port to use for the local server.")
@@ -24,12 +24,12 @@ func LoadConfig() (string, Config, error) {
 	flag.Parse()
 
 	if len(flag.Args()) <= 0 {
-		return "", Config{}, errors.New("error: Must provide a directory.")
+		return "", nil, errors.New("error: Must provide a directory.")
 	}
 
 	dir := flag.Args()[0]
 
-	return dir, Config{
+	return dir, &Config{
 		TLS:  *tls,
 		Mem:  *mem,
 		Port: *port,

@@ -5,28 +5,27 @@ package gohttpd
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 )
 
-type SiteHandler interface {
+type Handler interface {
 	Domains() []string
 	http.Handler
 }
 
 // GetHandler returns a group of Sites if the given dir is a GoHTTPd root
 // directory. Otherwise, t returns a single Site from the given directory.
-func GetSiteHandler(dir string, mem bool) (h SiteHandler, err error) {
+func GetHandler(dir string, cfg *Config) (h Handler, err error) {
 	if isRoot(dir) {
-		if h, err = loadSites(dir, mem); err != nil {
-			log.Fatal(err)
+		if h, err = loadSites(dir, cfg); err != nil {
+			return nil, err
 		}
 		return
 	}
-	return NewSite(dir, mem)
+	return NewSite(dir, cfg)
 }
 
 // isRoot returns true if there is a readable GoHTTPd configuration file
@@ -39,7 +38,7 @@ func isRoot(dir string) bool {
 
 type SiteGroup []*Site
 
-func loadSites(dir string, mem bool) (SiteGroup, error) {
+func loadSites(dir string, cfg *Config) (SiteGroup, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -50,7 +49,7 @@ func loadSites(dir string, mem bool) (SiteGroup, error) {
 		if f.IsDir() {
 			fpath := filepath.Join(dir, f.Name())
 
-			s, err := NewSite(fpath, mem)
+			s, err := NewSite(fpath, cfg)
 			if err != nil {
 				return nil, err
 			}
@@ -88,9 +87,9 @@ func (s Site) Domains() []string {
 	return []string{s.Domain}
 }
 
-func NewSite(dir string, mem bool) (_ *Site, err error) {
+func NewSite(dir string, cfg *Config) (_ *Site, err error) {
 	var h http.Handler
-	if mem {
+	if cfg.Mem {
 		if h, err = newFileMemCache(dir); err != nil {
 			return nil, err
 		}

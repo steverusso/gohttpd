@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-func ServeTLS(h SiteHandler) error {
+func ServeTLS(h Handler) error {
 	errCh := make(chan error)
 
 	// Serve the `sites` with TLS.
