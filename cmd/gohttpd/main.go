@@ -37,21 +37,13 @@ func main() {
 		}
 	}()
 
-	// Block here to catch and process signals from the OS.
-	listenForSignals(func(sig os.Signal) {
-		if sig == syscall.SIGTERM {
-			os.Exit(0)
-		}
-	})
-}
-
-// listenForSignals indicates which signals we want to catch and runs the
-// given function on each signal that is read from the os.Signal channel.
-func listenForSignals(sigFn func(os.Signal)) {
+	// Process signals from the OS.
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, syscall.SIGTERM)
 
 	for sig := range sigCh {
-		sigFn(sig)
+		if sig == syscall.SIGTERM {
+			os.Exit(0)
+		}
 	}
 }
