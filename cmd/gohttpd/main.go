@@ -25,14 +25,14 @@ func main() {
 	}
 
 	go func() {
-		if !cfg.TLS {
-			if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
+		if cfg.TLS {
+			if err := gohttpd.ServeTLS(h); err != nil {
 				log.Fatal(err)
 			}
 			return
 		}
 
-		if err := gohttpd.ServeTLS(h); err != nil {
+		if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
 			log.Fatal(err)
 		}
 	}()
