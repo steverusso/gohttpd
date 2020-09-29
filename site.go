@@ -14,9 +14,9 @@ type SiteHandler interface {
 	http.Handler
 }
 
-// getHandler returns a group of Sites if the given dir is a GoHTTPd root
+// GetHandler returns a group of Sites if the given dir is a GoHTTPd root
 // directory. Otherwise, t returns a single Site from the given directory.
-func getSiteHandler(dir string, mem bool) (h SiteHandler, err error) {
+func GetSiteHandler(dir string, mem bool) (h SiteHandler, err error) {
 	if isRoot(dir) {
 		if h, err = loadSites(dir, mem); err != nil {
 			log.Fatal(err)

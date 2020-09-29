@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/steverusso/gohttpd"
 )
 
 func main() {
@@ -25,7 +27,7 @@ func main() {
 		dir = flag.Args()[0]
 	}
 
-	h, err := getSiteHandler(dir, *mem)
+	h, err := gohttpd.GetSiteHandler(dir, *mem)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +40,7 @@ func main() {
 			return
 		}
 
-		if err := ServeTLS(h); err != nil {
+		if err := gohttpd.ServeTLS(h); err != nil {
 			log.Fatal(err)
 		}
 	}()
