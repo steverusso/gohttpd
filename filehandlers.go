@@ -1,7 +1,7 @@
 // This is free and unencumbered software released
 // into the public domain. Please see the UNLICENSE
 // file or unlicense.org for more information.
-package main
+package gohttpd
 
 import (
 	"io/ioutil"
