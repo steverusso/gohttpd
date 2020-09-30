@@ -12,13 +12,11 @@ import (
 
 type Config struct {
 	TLS  bool
-	Mem  bool
 	Port int
 }
 
 func LoadConfig() (string, *Config, error) {
 	tls := flag.Bool("tls", false, "Use TLS.")
-	mem := flag.Bool("mem", false, "Cache files in memory instead of using disk.")
 	port := flag.Int("port", 8080, "The port to use for the local server.")
 	flag.Usage = usage
 	flag.Parse()
@@ -31,7 +29,6 @@ func LoadConfig() (string, *Config, error) {
 
 	return dir, &Config{
 		TLS:  *tls,
-		Mem:  *mem,
 		Port: *port,
 	}, nil
 }
@@ -50,7 +47,7 @@ var usageMsg = `GoHTTPd is a specific, stubbornly simple web server.
 
 Usage:
 
-  gohttpd <directory> [options]
+  gohttpd [options] <directory>
 
 Options:
 

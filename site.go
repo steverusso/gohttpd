@@ -83,22 +83,13 @@ type Site struct {
 	http.Handler
 }
 
-func (s Site) Domains() []string {
-	return []string{s.Domain}
-}
-
 func NewSite(dir string, cfg *Config) (_ *Site, err error) {
-	var h http.Handler
-	if cfg.Mem {
-		if h, err = newFileMemCache(dir); err != nil {
-			return nil, err
-		}
-	} else {
-		h = http.FileServer(http.Dir(dir))
-	}
-
 	return &Site{
 		Domain:  path.Base(dir),
-		Handler: h,
+		Handler: http.FileServer(http.Dir(dir)),
 	}, nil
+}
+
+func (s Site) Domains() []string {
+	return []string{s.Domain}
 }
