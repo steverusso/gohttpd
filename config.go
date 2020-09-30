@@ -4,7 +4,6 @@
 package gohttpd
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -15,22 +14,21 @@ type Config struct {
 	Port int
 }
 
-func LoadConfig() (string, *Config, error) {
+func LoadConfig() (string, *Config) {
 	tls := flag.Bool("tls", false, "Use TLS.")
 	port := flag.Int("port", 8080, "The port to use for the local server.")
 	flag.Usage = usage
 	flag.Parse()
 
-	if len(flag.Args()) <= 0 {
-		return "", nil, errors.New("error: Must provide a directory.")
+	dir := "."
+	if len(flag.Args()) > 0 {
+		dir = flag.Args()[0]
 	}
-
-	dir := flag.Args()[0]
 
 	return dir, &Config{
 		TLS:  *tls,
 		Port: *port,
-	}, nil
+	}
 }
 
 func (c *Config) Addr() string {

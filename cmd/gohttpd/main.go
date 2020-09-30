@@ -11,10 +11,7 @@ import (
 )
 
 func main() {
-	dir, cfg, err := gohttpd.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	dir, cfg := gohttpd.LoadConfig()
 
 	h, err := gohttpd.GetHandler(dir, cfg)
 	if err != nil {
