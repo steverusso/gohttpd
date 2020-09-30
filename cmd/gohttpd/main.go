@@ -6,9 +6,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/steverusso/gohttpd"
 )
@@ -24,26 +21,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
-		if cfg.TLS {
-			if err := gohttpd.ServeTLS(h); err != nil {
-				log.Fatal(err)
-			}
-			return
-		}
-
-		if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
+	if cfg.TLS {
+		if err := gohttpd.ServeTLS(h); err != nil {
 			log.Fatal(err)
 		}
-	}()
+		return
+	}
 
-	// Process signals from the OS.
-	sigCh := make(chan os.Signal)
-	signal.Notify(sigCh, syscall.SIGTERM)
-
-	for sig := range sigCh {
-		if sig == syscall.SIGTERM {
-			os.Exit(0)
-		}
+	if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
+		log.Fatal(err)
 	}
 }
