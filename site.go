@@ -6,39 +6,38 @@ package gohttpd
 import (
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 )
 
-type Handler interface {
-	Domains() []string
-	http.Handler
+type SiteLoader struct {
+	config Config
+	logger Logger
+}
+
+func NewSiteLoader(config Config) (SiteLoader, error) {
+	logger, err := NewLogger(config.Log)
+	if err != nil {
+		return SiteLoader{}, err
+	}
+
+	return SiteLoader{config, logger}, nil
 }
 
 // GetHandler returns a group of Sites if the given dir is a GoHTTPd root
 // directory. Otherwise, t returns a single Site from the given directory.
-func GetHandler(dir string, cfg *Config) (h Handler, err error) {
-	if isRoot(dir) {
-		if h, err = loadSites(dir, cfg); err != nil {
+func (sl *SiteLoader) Load(dir string) (h http.Handler, err error) {
+	if sl.config.TLS {
+		if h, err = sl.loadSites(dir); err != nil {
 			return nil, err
 		}
 		return
 	}
-	return NewSite(dir, cfg)
+	return sl.loadSingleSite(dir), nil
 }
 
-// isRoot returns true if there is a readable GoHTTPd configuration file
-// located in the given directory.
-func isRoot(dir string) bool {
-	cfgFile := filepath.Join(dir, "gohttpd.yaml")
-	fi, err := os.Stat(cfgFile)
-	return err == nil && !fi.IsDir()
-}
-
-type SiteGroup []*Site
-
-func loadSites(dir string, cfg *Config) (SiteGroup, error) {
+func (sl *SiteLoader) loadSites(dir string) (SiteGroup, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -48,17 +47,36 @@ func loadSites(dir string, cfg *Config) (SiteGroup, error) {
 	for _, f := range files {
 		if f.IsDir() {
 			fpath := filepath.Join(dir, f.Name())
-
-			s, err := NewSite(fpath, cfg)
-			if err != nil {
-				return nil, err
-			}
-
-			sg = append(sg, s)
+			sg = append(sg, sl.loadSingleSite(fpath))
 		}
 	}
 
 	return sg, nil
+}
+
+type Site struct {
+	Domain string
+	http.Handler
+}
+
+type SiteGroup []*Site
+
+var ignoreRegex = regexp.MustCompile(`\.(png|jpg|css|ico)+$`)
+
+func (sl *SiteLoader) loadSingleSite(dir string) *Site {
+	h := http.FileServer(http.Dir(dir))
+	if sl.logger != nil {
+		h = chain(h, func(_ http.ResponseWriter, r *http.Request) {
+			if !ignoreRegex.MatchString(r.URL.String()) {
+				sl.logger.Log(r)
+			}
+		})
+	}
+
+	return &Site{
+		Domain:  path.Base(dir),
+		Handler: h,
+	}
 }
 
 func (sg SiteGroup) Domains() (d []string) {
@@ -78,18 +96,9 @@ func (sg SiteGroup) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// uh oh
 }
 
-type Site struct {
-	Domain string
-	http.Handler
-}
-
-func NewSite(dir string, cfg *Config) (_ *Site, err error) {
-	return &Site{
-		Domain:  path.Base(dir),
-		Handler: http.FileServer(http.Dir(dir)),
-	}, nil
-}
-
-func (s Site) Domains() []string {
-	return []string{s.Domain}
+func chain(h http.Handler, hf http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hf(w, r)
+		h.ServeHTTP(w, r)
+	})
 }

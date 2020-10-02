@@ -1,22 +1,10 @@
 # GoHTTPd
 
+## Building
+
+```shell
+go build -o gohttpd cmd/gohttpd/main.go
 ```
-GoHTTPd is a specific, stubbornly simple web server.
-
-Usage:
-
-    gohttpd <directory> [options]
-
-Options:
-
-    -mem         Cache files in memory instead of using disk.
-    -port int    The port to use for the local server. (default 8080)
-    -tls         Use TLS.
-```
-
-If the given `directory` contains a GoHTTPd configuration file, then it will
-treat all child directories as individual sites. Otherwise, it will just treat
-the given directory itself as a site.
 
 ## Install
 

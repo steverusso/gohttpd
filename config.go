@@ -12,26 +12,24 @@ import (
 type Config struct {
 	TLS  bool
 	Port int
+	Log  string
 }
 
-func LoadConfig() (string, *Config) {
-	tls := flag.Bool("tls", false, "Use TLS.")
-	port := flag.Int("port", 8080, "The port to use for the local server.")
+func LoadConfig() (dir string, cfg Config) {
+	flag.BoolVar(&cfg.TLS, "tls", false, "Use TLS.")
+	flag.IntVar(&cfg.Port, "port", 8080, "The port to use for the local server.")
+	flag.StringVar(&cfg.Log, "log", "", "The type of logging.")
 	flag.Usage = usage
 	flag.Parse()
 
-	dir := "."
+	dir = "."
 	if len(flag.Args()) > 0 {
 		dir = flag.Args()[0]
 	}
-
-	return dir, &Config{
-		TLS:  *tls,
-		Port: *port,
-	}
+	return
 }
 
-func (c *Config) Addr() string {
+func (c Config) Addr() string {
 	return fmt.Sprintf(":%d", c.Port)
 }
 

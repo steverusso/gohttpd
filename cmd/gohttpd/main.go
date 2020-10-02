@@ -13,19 +13,24 @@ import (
 func main() {
 	dir, cfg := gohttpd.LoadConfig()
 
-	h, err := gohttpd.GetHandler(dir, cfg)
+	loader, err := gohttpd.NewSiteLoader(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if cfg.TLS {
-		if err := gohttpd.ServeTLS(h); err != nil {
+	h, err := loader.Load(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !cfg.TLS {
+		if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
 
-	if err := http.ListenAndServe(cfg.Addr(), h); err != nil {
+	if err := gohttpd.ServeTLS(h); err != nil {
 		log.Fatal(err)
 	}
 }

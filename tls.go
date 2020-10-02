@@ -4,17 +4,23 @@
 package gohttpd
 
 import (
+	"errors"
 	"net/http"
 
 	"golang.org/x/crypto/acme/autocert"
 )
 
-func ServeTLS(h Handler) error {
+func ServeTLS(h http.Handler) error {
+	sg, ok := h.(SiteGroup)
+	if !ok {
+		return errors.New("can only serve SiteGroup over TLS")
+	}
+
 	errCh := make(chan error)
 
 	// Serve the `sites` with TLS.
 	go func() {
-		if err := http.Serve(autocert.NewListener(h.Domains()...), h); err != nil {
+		if err := http.Serve(autocert.NewListener(sg.Domains()...), sg); err != nil {
 			errCh <- err
 		}
 	}()
